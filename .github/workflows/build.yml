@@ -18,22 +18,18 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: gradle
+
+    - name: Setup Gradle 8.7
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: '8.7'
 
     - name: Accept Android Licenses
       run: |
         yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-    - name: Ensure Gradle Wrapper
-      run: |
-        if [ ! -f gradlew ]; then
-          sudo apt-get update && sudo apt-get install -y gradle
-          gradle wrapper
-        fi
-        chmod +x gradlew
-
     - name: Build APK with Gradle
-      run: ./gradlew assembleDebug --stacktrace
+      run: gradle assembleDebug --stacktrace
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
