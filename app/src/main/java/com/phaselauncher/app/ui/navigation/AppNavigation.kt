@@ -36,7 +36,7 @@ fun AppNavigation(preferences: AppPreferences) {
     val discordAvatarUrl by preferences.discordAvatarUrl.collectAsState(initial = "https://cdn.discordapp.com/embed/avatars/0.png")
 
     if (!isLoggedIn) {
-        AuthScreen(onLoginSuccess = {})
+        AuthScreen(preferences = preferences)
     } else {
         Scaffold(
             bottomBar = {
