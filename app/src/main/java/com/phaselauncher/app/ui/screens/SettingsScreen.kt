@@ -1,356 +1,229 @@
 package com.phaselauncher.app.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.phaselauncher.app.data.AppPreferences
 import com.phaselauncher.app.ui.components.DiscordAvatarCircle
-import com.phaselauncher.app.ui.theme.BorderColor
-import com.phaselauncher.app.ui.theme.CardDark
-import com.phaselauncher.app.ui.theme.ErrorRed
-import com.phaselauncher.app.ui.theme.SurfaceDark
-import com.phaselauncher.app.ui.theme.TextPrimary
-import com.phaselauncher.app.ui.theme.TextSecondary
+import com.phaselauncher.app.ui.components.PhasePlayButton
+import com.phaselauncher.app.ui.theme.*
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsScreen(
-    appPreferences: AppPreferences,
-    username: String,
-    avatarUrl: String,
-    onLogout: () -> Unit
-) {
+fun SettingsScreen(preferences: AppPreferences) {
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
-    val liquidGlassEnabled by appPreferences.liquidGlassEnabled.collectAsState(initial = false)
-    val apiUrl by appPreferences.apiUrl.collectAsState(initial = "http://172.24.189.149:3551")
-    val loginUrl by appPreferences.loginUrl.collectAsState(initial = "http://172.24.189.149:8080/login")
-    val targetPackage by appPreferences.targetPackage.collectAsState(initial = "com.ruin.fortnite")
+    val initialApiUrl by preferences.apiUrl.collectAsState(initial = "http://172.24.189.149:3551")
+    val initialLoginUrl by preferences.loginUrl.collectAsState(initial = "http://172.24.189.149:8080/login")
+    val initialPackage by preferences.targetPackage.collectAsState(initial = "com.ruin.fortnite")
+    val liquidGlassEnabled by preferences.liquidGlassEnabled.collectAsState(initial = false)
 
-    var tempApiUrl by remember { mutableStateOf(apiUrl) }
-    var tempLoginUrl by remember { mutableStateOf(loginUrl) }
-    var tempTargetPackage by remember { mutableStateOf(targetPackage) }
+    val discordUsername by preferences.discordUsername.collectAsState(initial = "Player")
+    val discordAvatarUrl by preferences.discordAvatarUrl.collectAsState(initial = "https://cdn.discordapp.com/embed/avatars/0.png")
+    val discordId by preferences.discordId.collectAsState(initial = "")
+
+    var currentApiUrl by remember { mutableStateOf("") }
+    var currentLoginUrl by remember { mutableStateOf("") }
+    var currentPkg by remember { mutableStateOf("") }
+
+    LaunchedEffect(initialApiUrl, initialLoginUrl, initialPackage) {
+        if (currentApiUrl.isEmpty()) currentApiUrl = initialApiUrl
+        if (currentLoginUrl.isEmpty()) currentLoginUrl = initialLoginUrl
+        if (currentPkg.isEmpty()) currentPkg = initialPackage
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(SurfaceDark)
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp)
-    ) {
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "SETTINGS",
-            color = TextPrimary,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        UserProfileCard(
-            username = username,
-            avatarUrl = avatarUrl,
-            onLogout = onLogout
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        SettingSection(title = "APPEARANCE") {
-            SettingToggle(
-                label = "Liquid Glass Mode",
-                description = "Enable translucent frosted glass effect",
-                checked = liquidGlassEnabled,
-                onCheckedChange = { enabled ->
-                    coroutineScope.launch {
-                        appPreferences.setLiquidGlassEnabled(enabled)
-                    }
-                }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        SettingSection(title = "SERVER CONFIGURATION") {
-            SettingTextField(
-                label = "API URL",
-                value = tempApiUrl,
-                onValueChange = { tempApiUrl = it },
-                onSave = {
-                    coroutineScope.launch {
-                        appPreferences.setApiUrl(tempApiUrl)
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SettingTextField(
-                label = "Login URL",
-                value = tempLoginUrl,
-                onValueChange = { tempLoginUrl = it },
-                onSave = {
-                    coroutineScope.launch {
-                        appPreferences.setLoginUrl(tempLoginUrl)
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SettingTextField(
-                label = "Target Package",
-                value = tempTargetPackage,
-                onValueChange = { tempTargetPackage = it },
-                onSave = {
-                    coroutineScope.launch {
-                        appPreferences.setTargetPackage(tempTargetPackage)
-                    }
-                }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        SettingSection(title = "ABOUT") {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = CardDark,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .padding(16.dp)
-            ) {
-                InfoRow(label = "App Name", value = "Phase Launcher")
-                InfoRow(label = "Version", value = "1.0.0")
-                InfoRow(label = "Build", value = "18.40")
-                InfoRow(label = "Season", value = "Chapter 2 Season 8")
-            }
-        }
-    }
-}
-
-@Composable
-fun UserProfileCard(
-    username: String,
-    avatarUrl: String,
-    onLogout: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = CardDark,
-                shape = RoundedCornerShape(16.dp)
-            )
-            .padding(20.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            DiscordAvatarCircle(
-                avatarUrl = avatarUrl,
-                size = 64
-            )
-            Spacer(modifier = Modifier.size(16.dp))
-            Column {
-                Text(
-                    text = username,
-                    color = TextPrimary,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Discord Account",
-                    color = TextSecondary,
-                    fontSize = 14.sp
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Button(
-            onClick = onLogout,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = ErrorRed
-            ),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Text(
-                text = "LOG OUT OF DISCORD",
-                color = Color.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp
-            )
-        }
-    }
-}
-
-@Composable
-fun SettingSection(
-    title: String,
-    content: @Composable () -> Unit
-) {
-    Column {
-        Text(
-            text = title,
-            color = TextSecondary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        content()
-    }
-}
-
-@Composable
-fun SettingToggle(
-    label: String,
-    description: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = CardDark,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = label,
-                color = TextPrimary,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                text = description,
-                color = TextSecondary,
-                fontSize = 12.sp
-            )
-        }
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange
-        )
-    }
-}
-
-@Composable
-fun SettingTextField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    onSave: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = CardDark,
-                shape = RoundedCornerShape(12.dp)
-            )
+            .background(BgDark)
             .padding(16.dp)
     ) {
         Text(
-            text = label,
+            text = "SETTINGS",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Black,
             color = TextPrimary,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium
+            modifier = Modifier.padding(bottom = 16.dp)
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        TextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            shape = RoundedCornerShape(8.dp),
-            colors = androidx.compose.material3.TextFieldDefaults.colors(
-                focusedContainerColor = SurfaceDark,
-                unfocusedContainerColor = SurfaceDark,
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary,
-                focusedIndicatorColor = BorderColor,
-                unfocusedIndicatorColor = BorderColor
-            )
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(
-            onClick = onSave,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF5865F2)
-            ),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Text(
-                text = "Save",
-                color = Color.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
 
-@Composable
-fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            color = TextSecondary,
-            fontSize = 14.sp
-        )
-        Text(
-            text = value,
-            color = TextPrimary,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium
-        )
+        // User Profile Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = SurfaceDark),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    DiscordAvatarCircle(avatarUrl = discordAvatarUrl, size = 48.dp)
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column {
+                        Text(
+                            text = discordUsername,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 16.sp,
+                            color = TextPrimary
+                        )
+                        if (discordId.isNotBlank()) {
+                            Text(
+                                text = "ID: $discordId",
+                                fontSize = 11.sp,
+                                color = TextSecondary
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            preferences.logout()
+                            Toast.makeText(context, "Logged out of Discord", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = ErrorRed),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("LOG OUT OF DISCORD", fontWeight = FontWeight.Bold, color = TextPrimary)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // Visual Appearance Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = SurfaceDark),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Liquid Glass Mode",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "Translucent frosted bottom dock",
+                        fontSize = 11.sp,
+                        color = TextSecondary
+                    )
+                }
+                Switch(
+                    checked = liquidGlassEnabled,
+                    onCheckedChange = {
+                        coroutineScope.launch {
+                            preferences.setLiquidGlassEnabled(it)
+                        }
+                    },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = NeonCyan,
+                        checkedTrackColor = ElectricBlue
+                    )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // Server Configuration Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = SurfaceDark),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "Server & Game Configuration",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = NeonCyan
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = currentApiUrl,
+                    onValueChange = { currentApiUrl = it },
+                    label = { Text("Reload Backend URL (port 3551)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = NeonCyan,
+                        unfocusedBorderColor = BorderColor,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = currentLoginUrl,
+                    onValueChange = { currentLoginUrl = it },
+                    label = { Text("Discord Auth URL (port 8080)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = NeonCyan,
+                        unfocusedBorderColor = BorderColor,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = currentPkg,
+                    onValueChange = { currentPkg = it },
+                    label = { Text("Target Game Package") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = NeonCyan,
+                        unfocusedBorderColor = BorderColor,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                PhasePlayButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            preferences.saveApiUrl(currentApiUrl)
+                            preferences.saveLoginUrl(currentLoginUrl)
+                            preferences.saveTargetPackage(currentPkg)
+                            Toast.makeText(context, "Settings saved successfully!", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    text = "SAVE SETTINGS"
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(80.dp))
     }
 }
